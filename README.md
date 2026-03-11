@@ -1,39 +1,164 @@
-# Convolutional Autoencoder for Image Denoising
+# Image Denoising Using Convolutional Autoencoder
 
 ## AIM
 
-To develop a convolutional autoencoder for image denoising application.
+To create a convolutional autoencoder that can effectively remove noise from images.
 
-## Problem Statement and Dataset
+## Problem Overview and Dataset
 
+In practical scenarios, images often contain noise that degrades the performance of computer vision models. A convolutional autoencoder learns compressed representations of images and reconstructs them, which can be used to remove noise.
 
-## DESIGN STEPS
+* **Dataset:** MNIST (28×28 grayscale images of handwritten digits)
+* **Noise:** Gaussian noise will be added to simulate real-world scenarios
 
-### STEP 1:
+## Implementation Steps
 
-### STEP 2:
+### Step 1: Setup Environment
 
-### STEP 3:
+Import required libraries: PyTorch, torchvision, matplotlib, and others for data handling and visualization.
 
-Write your own steps
+### Step 2: Load Dataset
+
+Download the MNIST dataset and apply transformations to convert images to tensors suitable for training.
+
+### Step 3: Introduce Noise
+
+Add Gaussian noise to the training and testing images using a custom noise-adding function.
+
+### Step 4: Define Autoencoder Architecture
+
+* **Encoder:** Convolutional layers (Conv2D) with ReLU activations and MaxPooling
+* **Decoder:** Transposed convolutional layers (ConvTranspose2D) with ReLU and Sigmoid activations to reconstruct the image
+
+### Step 5: Prepare Training
+
+* Initialize the autoencoder model
+* Define Mean Squared Error (MSE) as the loss function
+* Choose Adam optimizer for training
+
+### Step 6: Model Training
+
+Train the autoencoder using the noisy images as input and the original clean images as the target. Track the loss over epochs to monitor learning.
+
+### Step 7: Evaluate and Visualize
+
+* Compare the original, noisy, and denoised images
+* Visualize results to assess the model’s performance in removing noise
+
+---
 
 ## PROGRAM
-### Name:
-### Register Number:
+### Name: Dhanappriya S
+### Register Number: 212224230056
+```PYTHON
+class DenoisingAutoencoder(nn.Module):
+    def __init__(self):
+        super(DenoisingAutoencoder, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 16, 3, padding=1),  # 28x28 -> 28x28
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),             # 28x28 -> 14x14
+            nn.Conv2d(16, 8, 3, padding=1), # 14x14 -> 14x14
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2)              # 14x14 -> 7x7
+        )
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(8, 16, 2, stride=2),    # 7x7 -> 14x14
+            nn.ReLU(),
+            nn.ConvTranspose2d(16, 8, 2, stride=2),    # 14x14 -> 28x28
+            nn.ReLU(),
+            nn.Conv2d(8, 1, 3, padding=1),             # 28x28
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
 
 
-Include your code here
+# Initialize model, loss function and optimizer
+model = DenoisingAutoencoder().to(device)
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# Print model summary
+summary(model, input_size=(1, 28, 28))
+
+# Training Function
+def train(model, loader, criterion, optimizer, epochs=5):
+    model.train()
+    for epoch in range(epochs):
+        running_loss = 0.0
+        for images, _ in loader:
+            images = images.to(device)
+            noisy_images = add_noise(images).to(device)
+
+            outputs = model(noisy_images)
+            loss = criterion(outputs, images)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item()
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(loader):.4f}")
+
+# Evaluate and visualize
+def visualize_denoising(model, loader, num_images=10):
+    model.eval()
+    with torch.no_grad():
+        for images, _ in loader:
+            images = images.to(device)
+            noisy_images = add_noise(images).to(device)
+            outputs = model(noisy_images)
+            break
+
+    images = images.cpu().numpy()
+    noisy_images = noisy_images.cpu().numpy()
+    outputs = outputs.cpu().numpy()
+
+    print("Name:Dhanappiya s")
+    print("Register Number:21224230056")
+    plt.figure(figsize=(18, 6))
+    for i in range(num_images):
+        # Original
+        ax = plt.subplot(3, num_images, i + 1)
+        plt.imshow(images[i].squeeze(), cmap='gray')
+        ax.set_title("Original")
+        plt.axis("off")
+
+        # Noisy
+        ax = plt.subplot(3, num_images, i + 1 + num_images)
+        plt.imshow(noisy_images[i].squeeze(), cmap='gray')
+        ax.set_title("Noisy")
+        plt.axis("off")
+
+        # Denoised
+        ax = plt.subplot(3, num_images, i + 1 + 2 * num_images)
+        plt.imshow(outputs[i].squeeze(), cmap='gray')
+        ax.set_title("Denoised")
+        plt.axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
+# Run training and visualization
+train(model, train_loader, criterion, optimizer, epochs=5)
+visualize_denoising(model, test_loader)
+```
 
 ## OUTPUT
 
 ### Model Summary
 
-Include your model summary
+<img width="788" height="619" alt="image" src="https://github.com/user-attachments/assets/82f0d9e6-c530-4543-aa44-487594073bff" />
 
 ### Original vs Noisy Vs Reconstructed Image
 
-Include a few sample images here.
-
-
+<img width="572" height="120" alt="image" src="https://github.com/user-attachments/assets/7b33cfe0-0c7c-4fd9-ae8c-6a5df4cfff6b" />
+<img width="1639" height="765" alt="image" src="https://github.com/user-attachments/assets/1f349056-b7f7-47f6-b9ff-a05c5891bbd7" />
 
 ## RESULT
+
+The convolutional autoencoder was successfully trained to denoise MNIST digit images. The model effectively reconstructed clean images from their noisy versions, demonstrating its capability in feature extraction and noise reduction.
